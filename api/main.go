@@ -26,6 +26,7 @@ func main() {
 	}
 	defer db.Close()
 	http.HandleFunc("/create", createproduct)
+	http.HandleFunc("/get", getproduct)
 	http.ListenAndServe(":8000", nil)
 }
 
@@ -49,4 +50,28 @@ func createproduct(w http.ResponseWriter, r *http.Request) {
 	} else {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
+func getproduct(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		rows, err := db.Query("select id, name, price from product;")
+		if err != nil {
+			http.Error(w, "Error fetching Product", http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+		var productarr []Product
+		for rows.Next() {
+			var product Product
+			err := rows.Scan(&product.Id, &product.Name, &product.Price)
+			if err != nil {
+				http.Error(w, "Error scanning Product", http.StatusInternalServerError)
+				return
+			}
+			productarr = append(productarr, product)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(productarr)
+	} else {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+}}
 }
