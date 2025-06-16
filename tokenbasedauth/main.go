@@ -63,6 +63,17 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		username := claims["username"].(string)
+		role := claims["role"].(string)
+		expiry := int64(claims["expiry"].(float64)) // float64 → int64
+
+		// Optionally check expiry manually
+		if time.Now().Unix() > expiry {
+			http.Error(w, "Token expired", http.StatusUnauthorized)
+			return
+		}
 
 	fmt.Fprintln(w, "🎉 Welcome to the dashboard! You are authenticated.")
 }
+
